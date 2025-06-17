@@ -3,49 +3,50 @@ let canvas;
 /** @type {CanvasRenderingContext2D} */
 let ctx;
 
-const BASE_HEIGHT = 300;
+const BASE_SIDE_LENGTH = 800;
+const ITERATIONS = 6;
+const STROKE_COLOR = "rgb(15, 51, 212)";
+const LINE_DRAW_DELAY = 25;
 
 function onLoad() {
   canvas = document.getElementById("canvas");
-  canvas.width = 500;
-  canvas.height = 500;
+  canvas.width = BASE_SIDE_LENGTH;
+  canvas.height = BASE_SIDE_LENGTH;
 
   ctx = canvas.getContext("2d");
 
+  let firstInner;
   const base = createBase();
-  base.draw();
+  base
+    .draw()
+    .then(async () => {
+      firstInner = createFirstInner(base);
+      await firstInner.draw();
+    })
+    .then(() => {
+      drawChildren(firstInner);
+    });
+}
 
-  const firstInner = createFirstInner(base);
-  firstInner.draw();
-
+/** @param firstInner {Triangle} */
+async function drawChildren(firstInner) {
   let total = 0;
   let children = [firstInner];
-  for (i = 0; i < 10; i++) {
-    children.forEach((c) => c.draw());
+  for (i = 0; i < ITERATIONS; i++) {
+    await Promise.all(children.map((c) => c.draw()));
     total += children.length;
     children = children.map((c) => getChildren(c)).flat();
     console.log(total);
   }
 }
 
-/** @param triangle {Triangle} */
-function drawChildren(triangle) {
-  const children = getChildren(triangle);
-
-  for (const child of children) {
-    child.draw();
-  }
-}
-
-/**
- * @returns {Triangle}
- */
+/** @returns {Triangle} */
 function createBase() {
-  const side = Trig.hypotenuse(BASE_HEIGHT);
+  const baseHeight = Trig.adjecent(BASE_SIDE_LENGTH);
   return new Triangle([
-    new Point2D(0, BASE_HEIGHT),
-    new Point2D(side / 2, 0),
-    new Point2D(side, BASE_HEIGHT),
+    new Point2D(0, baseHeight),
+    new Point2D(BASE_SIDE_LENGTH / 2, 0),
+    new Point2D(BASE_SIDE_LENGTH, baseHeight),
   ]);
 }
 
@@ -69,7 +70,7 @@ function getChildren(triangle) {
   const top = midpoints[1];
   const right = midpoints[2];
   const sideLength = triangle.sides()[0].length() / 2;
-  const height = Trig.opposite(sideLength);
+  const height = Math.cos(Trig.radians(30)) * sideLength;
 
   const leftTriangle = new Triangle([
     left,
@@ -92,10 +93,19 @@ function getChildren(triangle) {
   return [leftTriangle, rightTriangle, upperTriangle];
 }
 
+async function wait(ms) {
+  await new Promise((res) => setTimeout(res, ms));
+}
+
 class Point2D {
   constructor(x, y) {
     this.x = x;
     this.y = y;
+  }
+
+  /** @returns {Point2D} */
+  round() {
+    return new Point2D(Math.round(this.x), Math.round(this.y));
   }
 }
 
@@ -104,6 +114,8 @@ class Line2D {
     this.start = start;
     this.end = end;
   }
+
+  /** @returns {number} */
   length() {
     const a = this.start.x - this.end.x;
     const b = this.start.y - this.end.y;
@@ -111,11 +123,18 @@ class Line2D {
     return Math.sqrt(a * a + b * b);
   }
 
+  /** @returns {Point2D} */
   midpoint() {
     return new Point2D(
       this.start.x + (this.end.x - this.start.x) / 2,
       this.start.y + (this.end.y - this.start.y) / 2
     );
+  }
+
+  /** @returns {Line2D[]} */
+  split() {
+    const midpoint = this.midpoint();
+    return [new Line2D(this.start, midpoint), new Line2D(midpoint, this.end)];
   }
 }
 
@@ -124,8 +143,8 @@ class Triangle {
     this.points = points;
   }
 
-  draw() {
-    Canvas.drawTriangle(this.points);
+  async draw() {
+    await Canvas.drawTriangle(this.points);
   }
 
   /** @returns {Line2D[]} */
@@ -145,12 +164,39 @@ class Triangle {
 
 class Canvas {
   /** @param points {[Point2D, Point2D, Point2D]} */
-  static drawTriangle(points) {
+  static async drawTriangle(points) {
+    ctx.strokeStyle = STROKE_COLOR;
+    await Canvas.drawLineAnimated(points[0], points[1]);
+    await Canvas.drawLineAnimated(points[1], points[2]);
+    await Canvas.drawLineAnimated(points[2], points[0]);
+  }
+
+  /**
+   * @param start {Point2D}
+   * @param end {Point2D}
+   */
+  static async drawLineAnimated(start, end) {
+    const line = new Line2D(start, end);
+    let parts = line.split();
+    const times = 5;
+    for (let i = 0; i < times; i++) {
+      parts = parts.map((p) => p.split()).flat();
+    }
+
+    for (const part of parts) {
+      await this.drawLine(part.start, part.end);
+      await wait(LINE_DRAW_DELAY);
+    }
+  }
+
+  /**
+   * @param start {Point2D}
+   * @param end {Point2D}
+   */
+  static async drawLine(start, end) {
     ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    ctx.lineTo(points[1].x, points[1].y);
-    ctx.lineTo(points[2].x, points[2].y);
-    ctx.closePath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
     ctx.stroke();
   }
 }
@@ -158,6 +204,10 @@ class Canvas {
 class Trig {
   static hypotenuse(height) {
     return Math.sqrt(height * height + height * height);
+  }
+
+  static adjecent(hypotenuse) {
+    return Math.cos(Trig.radians(30)) * hypotenuse;
   }
 
   static radians(degrees) {
