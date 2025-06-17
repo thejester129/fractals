@@ -32,9 +32,6 @@ async function drawChildren(firstInner) {
   let total = 1;
   let children = [firstInner];
   for (i = 0; i < ITERATIONS; i++) {
-    // for (const child of children) {
-    //   await child.draw();
-    // }
     await Promise.all(children.map((c) => c.draw()));
     total += children.length;
     totalElm.innerText = `Total: ${total}`;
@@ -180,7 +177,7 @@ class Canvas {
   static async drawLineAnimated(start, end) {
     const line = new Line2D(start, end);
     let parts = line.split();
-    const times = 5;
+    const times = line.length() > 10 ? 5 : 2;
     for (let i = 0; i < times; i++) {
       parts = parts.map((p) => p.split()).flat();
     }

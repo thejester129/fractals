@@ -5,8 +5,9 @@ let totalElm;
 /** @type {CanvasRenderingContext2D} */
 let ctx;
 
-const BASE_SIDE_LENGTH = 800;
-const ITERATIONS = 7;
+const BASE_SIDE_LENGTH = 600;
+const ITERATIONS = 8;
+const FILL_COLOR = "white";
 const STROKE_COLOR = "white";
 const LINE_DRAW_DELAY = 24;
 
@@ -17,12 +18,206 @@ function onLoad() {
   canvas.height = BASE_SIDE_LENGTH;
 
   ctx = canvas.getContext("2d");
+  ctx.strokeStyle = STROKE_COLOR;
 
-  let firstInner;
-  const base = createBase();
-  base.draw().then(() => {
-    totalElm.innerText = `Total: 1`;
-    firstInner = createFirstInner(base);
-    drawChildren(firstInner);
+  drawBorder().then(() => {
+    const length = BASE_SIDE_LENGTH / 3;
+    const start = new Point2D(length, length);
+    const middle = new Square(start, length);
+    drawChildren(middle);
   });
+}
+
+async function drawBorder() {
+  await Canvas.drawSquare(new Point2D(0, 0), BASE_SIDE_LENGTH);
+}
+
+async function drawMiddle() {
+  const length = BASE_SIDE_LENGTH / 3;
+  const start = new Point2D(length, length);
+
+  await Canvas.drawSquare(start, length);
+}
+
+async function drawChildren(middle) {
+  let total = 1;
+  let children = [middle];
+  for (i = 0; i < ITERATIONS; i++) {
+    await Promise.all(children.map((c) => c.draw()));
+    total += children.length;
+    totalElm.innerText = `Total: ${total}`;
+    children = children.map((c) => getChildren(c)).flat();
+  }
+}
+
+/**
+ * @param parent {Square}
+ * @returns {Square[]}
+ */
+function getChildren(parent) {
+  const length = parent.length / 3;
+  const top = new Square(
+    new Point2D(parent.start.x + length, parent.start.y - length * 2),
+    length
+  );
+  const bottom = new Square(
+    new Point2D(
+      parent.start.x + length,
+      parent.start.y + parent.length + length
+    ),
+    length
+  );
+  const left = new Square(
+    new Point2D(parent.start.x - length * 2, parent.start.y + length),
+    length
+  );
+  const right = new Square(
+    new Point2D(
+      parent.start.x + parent.length + length,
+      parent.start.y + length
+    ),
+    length
+  );
+  const topLeft = new Square(new Point2D(left.start.x, top.start.y), length);
+  const topRight = new Square(new Point2D(right.start.x, top.start.y), length);
+  const bottomLeft = new Square(
+    new Point2D(left.start.x, bottom.start.y),
+    length
+  );
+  const bottomRight = new Square(
+    new Point2D(right.start.x, bottom.start.y),
+    length
+  );
+
+  return [top, bottom, left, right, topLeft, topRight, bottomLeft, bottomRight];
+}
+
+async function wait(ms) {
+  await new Promise((res) => setTimeout(res, ms));
+}
+
+class Point2D {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  /** @returns {Point2D} */
+  round() {
+    return new Point2D(Math.round(this.x), Math.round(this.y));
+  }
+}
+
+class Line2D {
+  constructor(start, end) {
+    this.start = start;
+    this.end = end;
+  }
+
+  /** @returns {number} */
+  length() {
+    const a = this.start.x - this.end.x;
+    const b = this.start.y - this.end.y;
+
+    return Math.sqrt(a * a + b * b);
+  }
+
+  /** @returns {Point2D} */
+  midpoint() {
+    return new Point2D(
+      this.start.x + (this.end.x - this.start.x) / 2,
+      this.start.y + (this.end.y - this.start.y) / 2
+    );
+  }
+
+  /** @returns {Line2D[]} */
+  split() {
+    const midpoint = this.midpoint();
+    return [new Line2D(this.start, midpoint), new Line2D(midpoint, this.end)];
+  }
+
+  /** @returns {Line2D[]} */
+  split3() {
+    const firstThird = new Point2D(
+      this.start.x + (this.end.x - this.start.x) / 3,
+      this.start.y + (this.end.y - this.start.y) / 3
+    );
+    const secondThird = new Point2D(
+      this.start.x + ((this.end.x - this.start.x) / 3) * 2,
+      this.start.y + ((this.end.y - this.start.y) / 3) * 2
+    );
+
+    return [
+      new Line2D(this.start, firstThird),
+      new Line2D(firstThird, secondThird),
+      new Line2D(secondThird, this.end),
+    ];
+  }
+}
+
+class Square {
+  constructor(start, length) {
+    this.start = start;
+    this.length = length;
+  }
+
+  async draw() {
+    await Canvas.drawSquare(this.start, this.length);
+  }
+}
+
+class Canvas {
+  /** @param points {[Point2D, Point2D, Point2D]} */
+  static async drawTriangle(points) {
+    ctx.strokeStyle = STROKE_COLOR;
+    await Canvas.drawLineAnimated(points[0], points[1]);
+    await Canvas.drawLineAnimated(points[1], points[2]);
+    await Canvas.drawLineAnimated(points[2], points[0]);
+  }
+
+  /**
+   * @param start {Point2D}
+   * @param length {number}
+   */
+  static async drawSquare(start, length) {
+    const points = [
+      start,
+      new Point2D(start.x + length, start.y),
+      new Point2D(start.x + length, start.y + length),
+      new Point2D(start.x, start.y + length),
+    ];
+    await Canvas.drawLineAnimated(points[0], points[1]);
+    await Canvas.drawLineAnimated(points[1], points[2]);
+    await Canvas.drawLineAnimated(points[2], points[3]);
+    await Canvas.drawLineAnimated(points[3], points[0]);
+  }
+
+  /**
+   * @param start {Point2D}
+   * @param end {Point2D}
+   */
+  static async drawLineAnimated(start, end) {
+    const line = new Line2D(start, end);
+    let parts = line.split();
+    const times = line.length() > 10 ? 5 : 2;
+    for (let i = 0; i < times; i++) {
+      parts = parts.map((p) => p.split()).flat();
+    }
+
+    for (const part of parts) {
+      await this.drawLine(part.start, part.end);
+      await wait(LINE_DRAW_DELAY);
+    }
+  }
+
+  /**
+   * @param start {Point2D}
+   * @param end {Point2D}
+   */
+  static async drawLine(start, end) {
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+  }
 }
