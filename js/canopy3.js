@@ -19,7 +19,7 @@ function onLoad() {
   canvas = document.getElementById("canvas");
   totalElm = document.getElementById("total");
   canvas.width = BASE_LENGTH * 6;
-  canvas.height = BASE_LENGTH * 6;
+  canvas.height = BASE_LENGTH * 4;
 
   ctx = canvas.getContext("2d");
   ctx.strokeStyle = STROKE_COLOR;

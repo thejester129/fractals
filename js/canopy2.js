@@ -10,7 +10,7 @@ const BASE_THICKNESS = 15;
 const ITERATIONS = 13;
 const FILL_COLOR = "white";
 const STROKE_COLOR = "white";
-const LINE_DRAW_DELAY = 5;
+const LINE_DRAW_DELAY = 10;
 const RATIO = 0.75;
 const ANGLE = 20;
 
@@ -18,7 +18,7 @@ function onLoad() {
   canvas = document.getElementById("canvas");
   totalElm = document.getElementById("total");
   canvas.width = BASE_LENGTH * 6;
-  canvas.height = BASE_LENGTH * 6;
+  canvas.height = BASE_LENGTH * 4;
 
   ctx = canvas.getContext("2d");
   ctx.strokeStyle = STROKE_COLOR;
