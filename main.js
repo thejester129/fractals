@@ -1,15 +1,18 @@
 /** @type {HTMLCanvasElement} */
 let canvas;
+/** @type {HTMLDivElement} */
+let totalElm;
 /** @type {CanvasRenderingContext2D} */
 let ctx;
 
 const BASE_SIDE_LENGTH = 800;
-const ITERATIONS = 6;
-const STROKE_COLOR = "rgb(15, 51, 212)";
-const LINE_DRAW_DELAY = 25;
+const ITERATIONS = 7;
+const STROKE_COLOR = "white";
+const LINE_DRAW_DELAY = 20;
 
 function onLoad() {
   canvas = document.getElementById("canvas");
+  totalElm = document.getElementById("total");
   canvas.width = BASE_SIDE_LENGTH;
   canvas.height = BASE_SIDE_LENGTH;
 
@@ -17,26 +20,25 @@ function onLoad() {
 
   let firstInner;
   const base = createBase();
-  base
-    .draw()
-    .then(async () => {
-      firstInner = createFirstInner(base);
-      await firstInner.draw();
-    })
-    .then(() => {
-      drawChildren(firstInner);
-    });
+  base.draw().then(() => {
+    totalElm.innerText = `Total: 1`;
+    firstInner = createFirstInner(base);
+    drawChildren(firstInner);
+  });
 }
 
 /** @param firstInner {Triangle} */
 async function drawChildren(firstInner) {
-  let total = 0;
+  let total = 1;
   let children = [firstInner];
   for (i = 0; i < ITERATIONS; i++) {
+    // for (const child of children) {
+    //   await child.draw();
+    // }
     await Promise.all(children.map((c) => c.draw()));
     total += children.length;
+    totalElm.innerText = `Total: ${total}`;
     children = children.map((c) => getChildren(c)).flat();
-    console.log(total);
   }
 }
 
@@ -86,8 +88,8 @@ function getChildren(triangle) {
 
   const upperTriangle = new Triangle([
     top,
-    new Point2D(top.x + sideLength / 2, top.y - height),
     new Point2D(top.x - sideLength / 2, top.y - height),
+    new Point2D(top.x + sideLength / 2, top.y - height),
   ]);
 
   return [leftTriangle, rightTriangle, upperTriangle];

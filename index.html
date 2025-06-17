@@ -32,7 +32,14 @@
     <script src="main.js"></script>
   </head>
   <body>
-    <canvas id="canvas"></canvas>
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <canvas
+      id="canvas"
+      style="margin-left: calc(50vw - 400px); margin-top: calc(50vh - 400px)"
+    ></canvas>
+    <div id="total" style="color: white; margin-left: 50px">Total: 0</div>
   </body>
   <script>
     window.onload = () => onLoad();
