@@ -177,7 +177,7 @@ class Canvas {
   static async drawLineAnimated(start, end) {
     const line = new Line2D(start, end);
     let parts = line.split();
-    const times = line.length() > 10 ? 5 : 2;
+    const times = line.length() > 20 ? 5 : 2;
     for (let i = 0; i < times; i++) {
       parts = parts.map((p) => p.split()).flat();
     }

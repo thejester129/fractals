@@ -5,38 +5,29 @@ let totalElm;
 /** @type {CanvasRenderingContext2D} */
 let ctx;
 
-const BASE_SIDE_LENGTH = 600;
-const ITERATIONS = 10;
+const BASE_LENGTH = 150;
+const BASE_THICKNESS = 15;
+const ITERATIONS = 15;
 const FILL_COLOR = "white";
 const STROKE_COLOR = "white";
-const LINE_DRAW_DELAY = 24;
+const LINE_DRAW_DELAY = 20;
+const RATIO = 0.75;
+const ANGLE = 20;
 
 function onLoad() {
   canvas = document.getElementById("canvas");
   totalElm = document.getElementById("total");
-  canvas.width = BASE_SIDE_LENGTH;
-  canvas.height = BASE_SIDE_LENGTH;
+  canvas.width = BASE_LENGTH * 6;
+  canvas.height = BASE_LENGTH * 6;
 
   ctx = canvas.getContext("2d");
   ctx.strokeStyle = STROKE_COLOR;
+  ctx.lineWidth = BASE_THICKNESS;
 
-  drawBorder().then(() => {
-    const length = BASE_SIDE_LENGTH / 3;
-    const start = new Point2D(length, length);
-    const middle = new Square(start, length);
-    drawChildren(middle);
-  });
-}
-
-async function drawBorder() {
-  await Canvas.drawSquare(new Point2D(0, 0), BASE_SIDE_LENGTH);
-}
-
-async function drawMiddle() {
-  const length = BASE_SIDE_LENGTH / 3;
-  const start = new Point2D(length, length);
-
-  await Canvas.drawSquare(start, length);
+  const start = new Point2D(BASE_LENGTH * 3, BASE_LENGTH * 4);
+  const end = new Point2D(BASE_LENGTH * 3, BASE_LENGTH * 3);
+  const parent = new Line2D(start, end);
+  drawChildren(parent);
 }
 
 async function drawChildren(middle) {
@@ -51,45 +42,23 @@ async function drawChildren(middle) {
 }
 
 /**
- * @param parent {Square}
- * @returns {Square[]}
+ * @param parent {Line2D}
+ * @returns {Line2D[]}
  */
 function getChildren(parent) {
-  const length = parent.length / 3;
-  const top = new Square(
-    new Point2D(parent.start.x + length, parent.start.y - length * 2),
-    length
+  const length = parent.length() * RATIO;
+  ctx.lineWidth = Math.max(ctx.lineWidth * RATIO, 1);
+  const start = parent.end;
+  const end = new Point2D(parent.end.x, parent.end.y - length);
+
+  const line1 = new Line2D(start, end).rotateClockwise(
+    parent.angle() + 90 + ANGLE
   );
-  const bottom = new Square(
-    new Point2D(
-      parent.start.x + length,
-      parent.start.y + parent.length + length
-    ),
-    length
-  );
-  const left = new Square(
-    new Point2D(parent.start.x - length * 2, parent.start.y + length),
-    length
-  );
-  const right = new Square(
-    new Point2D(
-      parent.start.x + parent.length + length,
-      parent.start.y + length
-    ),
-    length
-  );
-  const topLeft = new Square(new Point2D(left.start.x, top.start.y), length);
-  const topRight = new Square(new Point2D(right.start.x, top.start.y), length);
-  const bottomLeft = new Square(
-    new Point2D(left.start.x, bottom.start.y),
-    length
-  );
-  const bottomRight = new Square(
-    new Point2D(right.start.x, bottom.start.y),
-    length
+  const line2 = new Line2D(start, end).rotateClockwise(
+    parent.angle() + 90 - ANGLE
   );
 
-  return [top, bottom, left, right, topLeft, topRight, bottomLeft, bottomRight];
+  return [line1, line2];
 }
 
 async function wait(ms) {
@@ -106,12 +75,29 @@ class Point2D {
   round() {
     return new Point2D(Math.round(this.x), Math.round(this.y));
   }
+
+  rotateClockwise(angle, centre) {
+    const rotatedX =
+      (this.x - centre.x) * Math.cos(Math.PI / (180 / angle)) -
+      (this.y - centre.y) * Math.sin(Math.PI / (180 / angle)) +
+      centre.x;
+    const rotatedY =
+      (this.x - centre.x) * Math.sin(Math.PI / (180 / angle)) +
+      (this.y - centre.y) * Math.cos(Math.PI / (180 / angle)) +
+      centre.y;
+
+    return new Point2D(rotatedX, rotatedY);
+  }
 }
 
 class Line2D {
   constructor(start, end) {
     this.start = start;
     this.end = end;
+  }
+
+  async draw() {
+    await Canvas.drawLineAnimated(this.start, this.end);
   }
 
   /** @returns {number} */
@@ -122,11 +108,33 @@ class Line2D {
     return Math.sqrt(a * a + b * b);
   }
 
+  /** @returns {number} */
+  angle() {
+    const dy = this.start.y - this.end.y;
+    const dx = this.start.x - this.end.x;
+    const radians = Math.atan2(dy, dx);
+    let degrees = (radians * 180) / Math.PI;
+
+    if (degrees < 0) {
+      degrees += 360;
+    }
+
+    return degrees - 180;
+  }
+
   /** @returns {Point2D} */
   midpoint() {
     return new Point2D(
       this.start.x + (this.end.x - this.start.x) / 2,
       this.start.y + (this.end.y - this.start.y) / 2
+    );
+  }
+
+  /** @returns {Line2D} */
+  rotateClockwise(angle) {
+    return new Line2D(
+      new Point2D(this.start.x, this.start.y),
+      this.end.rotateClockwise(angle, this.start)
     );
   }
 
@@ -199,7 +207,7 @@ class Canvas {
   static async drawLineAnimated(start, end) {
     const line = new Line2D(start, end);
     let parts = line.split();
-    const times = line.length() > 10 ? 5 : 2;
+    const times = line.length() > 20 ? 5 : 2;
     for (let i = 0; i < times; i++) {
       parts = parts.map((p) => p.split()).flat();
     }
