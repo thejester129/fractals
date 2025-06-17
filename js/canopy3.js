@@ -10,9 +10,10 @@ const BASE_THICKNESS = 15;
 const ITERATIONS = 13;
 const FILL_COLOR = "white";
 const STROKE_COLOR = "white";
-const LINE_DRAW_DELAY = 5;
+const LINE_DRAW_DELAY = 15;
 const RATIO = 0.75;
-const ANGLE = 20;
+const ANGLE_LEFT = 20;
+const ANGLE_RIGHT = 40;
 
 function onLoad() {
   canvas = document.getElementById("canvas");
@@ -52,10 +53,10 @@ function getChildren(parent) {
   const end = new Point2D(parent.end.x, parent.end.y - length);
 
   const line1 = new Line2D(start, end).rotateClockwise(
-    parent.angle() + 90 + ANGLE
+    parent.angle() + 90 + ANGLE_RIGHT
   );
   const line2 = new Line2D(start, end).rotateClockwise(
-    parent.angle() + 90 - ANGLE
+    parent.angle() + 90 - ANGLE_LEFT
   );
 
   return [line1, line2];

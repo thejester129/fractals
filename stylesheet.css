@@ -7,7 +7,6 @@ body{
     background-attachment: fixed;
 }
 
-
 #header{
     margin-top:40px;
     display: flex;
@@ -16,17 +15,25 @@ body{
 }
 
 .nav-link{
-    font-size: larger;
-    text-decoration: underline;
+    font-size: x-large;
     cursor: pointer;
-    color: "white";
+    color: gainsboro;
 }
 
-a { color: whitesmoke; } 
+.nav-link-active{
+    font-size: x-large;
+    cursor: pointer;
+    font-weight: bold;
+    color: white;
+}
+
+a { 
+    color: inherit; 
+    text-decoration: inherit;
+} 
 
 a:hover {
     color:white; 
-    text-decoration:none; 
     cursor:pointer;  
 }
 

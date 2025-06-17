@@ -8,7 +8,7 @@ let ctx;
 const BASE_SIDE_LENGTH = 800;
 const ITERATIONS = 7;
 const STROKE_COLOR = "white";
-const LINE_DRAW_DELAY = 24;
+const LINE_DRAW_DELAY = 20;
 
 function onLoad() {
   canvas = document.getElementById("canvas");
@@ -23,7 +23,7 @@ function onLoad() {
   base.draw().then(() => {
     totalElm.innerText = `Total: 1`;
     firstInner = createFirstInner(base);
-    drawChildren(firstInner);
+    drawChildren(firstInner).then(() => window.location.reload());
   });
 }
 
@@ -177,7 +177,7 @@ class Canvas {
   static async drawLineAnimated(start, end) {
     const line = new Line2D(start, end);
     let parts = line.split();
-    const times = line.length() > 20 ? 5 : 2;
+    const times = line.length() > 20 ? 5 : 3;
     for (let i = 0; i < times; i++) {
       parts = parts.map((p) => p.split()).flat();
     }

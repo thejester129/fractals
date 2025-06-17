@@ -9,7 +9,7 @@ const BASE_SIDE_LENGTH = 600;
 const ITERATIONS = 10;
 const FILL_COLOR = "white";
 const STROKE_COLOR = "white";
-const LINE_DRAW_DELAY = 24;
+const LINE_DRAW_DELAY = 20;
 
 function onLoad() {
   canvas = document.getElementById("canvas");
@@ -24,7 +24,7 @@ function onLoad() {
     const length = BASE_SIDE_LENGTH / 3;
     const start = new Point2D(length, length);
     const middle = new Square(start, length);
-    drawChildren(middle);
+    drawChildren(middle).then(() => window.location.reload());
   });
 }
 
@@ -199,7 +199,7 @@ class Canvas {
   static async drawLineAnimated(start, end) {
     const line = new Line2D(start, end);
     let parts = line.split();
-    const times = line.length() > 10 ? 5 : 2;
+    const times = line.length() > 20 ? 5 : 3;
     for (let i = 0; i < times; i++) {
       parts = parts.map((p) => p.split()).flat();
     }
