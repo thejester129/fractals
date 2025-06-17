@@ -5,7 +5,7 @@ let totalElm;
 /** @type {CanvasRenderingContext2D} */
 let ctx;
 
-const BASE_SIDE_LENGTH = 800;
+const BASE_SIDE_LENGTH = 600;
 const ITERATIONS = 7;
 const STROKE_COLOR = "white";
 const LINE_DRAW_DELAY = 20;
