@@ -29,6 +29,7 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
     />
+    <script src="js/sierpinski-triangle.js"></script>
   </head>
   <body>
     <div id="header">
@@ -42,5 +43,15 @@
     <div class="wave"></div>
     <div class="wave"></div>
     <div class="wave"></div>
+    <canvas
+      id="canvas"
+      style="margin-left: calc(50vw - 400px); margin-top: calc(50vh - 400px)"
+    ></canvas>
+    <div id="total" style="color: white; margin-left: 50px; visibility: hidden">
+      Total: 0
+    </div>
   </body>
+  <script>
+    window.onload = () => onLoad();
+  </script>
 </html>

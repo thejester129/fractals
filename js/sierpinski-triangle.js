@@ -8,7 +8,7 @@ let ctx;
 const BASE_SIDE_LENGTH = 800;
 const ITERATIONS = 7;
 const STROKE_COLOR = "white";
-const LINE_DRAW_DELAY = 20;
+const LINE_DRAW_DELAY = 24;
 
 function onLoad() {
   canvas = document.getElementById("canvas");
